@@ -1,0 +1,296 @@
+/* initialize jsPsych */
+
+var jsPsych = initJsPsych({
+  on_finish: function () {
+    jsPsych.data.displayData();
+    jsPsych.data.get().localSave('csv', 'mydata.csv');
+  },
+});
+
+
+// create and initialize timeline
+var timeline = [];
+
+////////////////////////////////////////////////////////////
+/* Define the likert scales */
+////////////////////////////////////////////////////////////
+
+ const likertPleasant = [
+      "1 <p> Desagradável",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Agradável"
+    ];
+    
+   const likertLikeable = [
+      "1 <p> Não atrativo",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Atrativo"
+    ];
+    
+   const likertIrritating = [
+      "1 <p> Não Irritante",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Irritante"
+    ];
+    
+   const likertInteresting = [
+      "1 <p> Desenteressante",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Interessante"
+    ];
+
+////////////////////////////////////////////////////////////
+/* Define Welcome Screen */
+////////////////////////////////////////////////////////////
+
+
+var welcome = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      <p> Bem-vindo ao meu experimento. Obrigado por participar. Antes de começarmos, por favor, reserve um tempo para responder algumas perguntas sobre você</p>
+      <button id="forward-button">Next</button>
+      <button id="back-button" style="display: none;">Back</button>
+    </div>
+  `,
+  on_load: function(data) {
+    document.querySelector('#forward-button').addEventListener('click', function() {
+      jsPsych.finishTrial();
+    });
+    document.querySelector('#back-button').addEventListener('click', function() {
+      // logic for going back in the timeline
+    });
+  },
+  choices: "NO_KEYS"
+};
+
+timeline.push(welcome)
+
+////////////////////////////////////////////////////////////
+/* Demographics */
+////////////////////////////////////////////////////////////
+
+var age = {
+      type: jsPsychSurveyText,
+      questions: [{prompt: "Qual é a sua idade?", name: "age"}],
+      on_finish: function (data) {
+        jsPsych.data.addProperties({age: parseInt(data.responses)});
+      },
+    };
+
+timeline.push(age)
+
+var infos = {
+      type: jsPsychSurveyMultiSelect,
+      questions: [
+        {
+          prompt: "Qual é o seu gênero?", 
+          options: ['Homen', 'Mulher', 'Prefiro não dizer'], 
+          horizontal: true,
+          required: true,
+          name: 'Gender'
+        }, 
+         {
+          prompt: "Qual é o seu nível de educação mais alto concluído?", 
+          options: ['Nenhum estudo concluído', 'Educação primária (idade: 5-10)',
+                'Educação secundária (idade: 11-17)', 'Graduação universitária/ equivalente profissional', 
+                'Pós-graduação', 'Prefiro não dizer'],      
+          horizontal: true,
+          required: true,
+          name: 'Education'
+        }
+      ], 
+      randomize_question_order: false
+    };
+    
+timeline.push(infos);
+
+////////////////////////////////////////////////////////////
+/* Experiment*/
+////////////////////////////////////////////////////////////
+
+
+
+
+
+var instructions = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      A seguir, você verá uma imagem por alguns segundos. Após ela desaparecer, você terá que responder algumas perguntas <p> Leve o tempo que precisar para responder a essas perguntas.<p> 
+      <button id="forward-button">Next</button>
+      <button id="back-button" style="display: none;">Back</button>
+    </div>
+  `,
+  on_load: function(data) {
+    document.querySelector('#forward-button').addEventListener('click', function() {
+      jsPsych.finishTrial();
+    });
+    document.querySelector('#back-button').addEventListener('click', function() {
+      // logic for going back in the timeline
+    });
+  },
+  choices: "NO_KEYS"
+};
+
+timeline.push(instructions)
+
+
+
+////////////////////////////////////////////////////////////
+    /* Stimuli */
+    ////////////////////////////////////////////////////////////
+    
+    // Create the Image pools 
+var image_pool_PT = ['Control_Headphones.png', 'Control_Toothbrush.png', 'Control_Watch.png',  
+'PT_Longterm_Headphones.png', 'PT_Longterm_Toothbrusch.png', 'PT_Longterm_Watch.png',
+'PT_Shortterm_Headphones.png', 'PT_Shortterm_Toothbrusch.png', 'PT_Shortterm_Watch.png'
+]
+
+
+  // Preload the images -> Prevent technical hiccups
+    jsPsych.pluginAPI.preloadImages(image_pool_PT, function(){
+    });
+    
+      // Preload the images -> Prevent technical hiccups
+    jsPsych.pluginAPI.preloadImages(image_pool_PT, function(){
+    });
+    
+
+  ////////////////////////////////////////////////////////////
+    /* Timline of Experiment */
+  ////////////////////////////////////////////////////////////
+  
+    // 1. Fixation Cross
+    var fixation_timing = null; 
+    var fixation = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div style="font-size:60px;">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: function() {
+        fixation_timing = jsPsych.randomization.sampleWithReplacement([1000], 1);
+        return fixation_timing;
+      },
+      data: {
+        task: 'fixation'
+      },
+      on_finish: function(data){
+        data.trial_duration = fixation_timing;
+      } 
+    };
+    
+    // 2. For-Loop over randomized stimuli 
+    
+    var trials = []; 
+    for (var i = 0; i < image_pool_PT.length; i++) {
+      trials.push({
+      stimulus: image_pool_PT[i]
+      })
+    }
+
+  // 3. Display stimulus (8000ms)
+    var stimuli = {
+      type: jsPsychImageKeyboardResponse, 
+      stimulus: jsPsych.timelineVariable('stimulus'),
+      stimulus_height: 350,
+      choices: 'NO_KEYS', 
+      trial_duration: 8000, 
+    };
+    
+    
+    const follow_up = {
+      type: jsPsychSurveyLikert,
+      preamble:
+        "Por favor, avalie o anúncio nas seguintes escalas:",
+      questions: [
+        {
+          prompt: "",
+          labels: likertPleasant,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertLikeable,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertIrritating,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertInteresting,
+          required: true
+        }
+      ]
+    };
+
+    
+    
+    
+    ////////////////////////////////////////////////////////////
+    /* Define the test procedure */
+    ////////////////////////////////////////////////////////////
+     var test_procedure = {
+      timeline: [fixation, stimuli, follow_up], 
+      timeline_variables: trials, 
+      sample: {
+        type: 'without-replacement',
+        size: image_pool_PT.length}, 
+        repetitions: 1 
+      }; 
+      timeline.push(test_procedure)
+      
+      
+  
+      var debrief = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      Este é o fim do experimento. Obrigado pela sua participação! <p> Nosso objetivo era investigar como a dimensão cultural de Orientação a Longo Prazo de Hofstede influencia as respostas dos consumidores aos anúncios. Você visualizou vários anúncios projetados para refletir valores de longo prazo ou de curto prazo. O propósito era entender como esses diferentes apelos impactam as atitudes e decisões do consumidor. Sua participação ajuda a aprofundar nossa compreensão da complexa interação entre cultura e comportamento do consumidor. <p> Se você tiver alguma dúvida, por favor, entre em contato: 100489594@alumnos.uc3m.es <p> <strong> Para finalizar o experimento, por favor, clique em “Next”</strong></a></p>
+      <button id="forward-button">Next</button>
+      <button id="back-button" style="display: none;">Back</button>
+    </div>
+  `,
+  on_load: function(data) {
+    document.querySelector('#forward-button').addEventListener('click', function() {
+      jsPsych.finishTrial();
+    });
+    document.querySelector('#back-button').addEventListener('click', function() {
+      // logic for going back in the timeline
+    });
+  },
+  choices: "NO_KEYS"
+};
+
+timeline.push(debrief)
+      
+
+   
+    /* start the experiment */
+    jsPsych.run(timeline);
