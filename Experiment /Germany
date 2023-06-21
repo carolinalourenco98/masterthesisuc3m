@@ -1,0 +1,300 @@
+/* initialize jsPsych */
+
+var jsPsych = initJsPsych({
+  on_finish: function () {
+    jsPsych.data.displayData();
+    jsPsych.data.get().localSave('csv', 'mydata.csv');
+  },
+});
+
+// create and initialize timeline
+var timeline = [];
+
+
+// capture info from Prolific
+  var subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID');
+  var study_id = jsPsych.data.getURLVariable('STUDY_ID');
+  var session_id = jsPsych.data.getURLVariable('SESSION_ID');
+
+  jsPsych.data.addProperties({
+    subject_id: subject_id,
+    study_id: study_id,
+    session_id: session_id
+  });
+
+////////////////////////////////////////////////////////////
+/* Define the likert scales */
+////////////////////////////////////////////////////////////
+
+ const likertPleasant = [
+      "1 <p> Unangenehm",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Angenehm"
+    ];
+    
+   const likertLikeable = [
+      "1 <p> Unsympathisch",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Sympathisch"
+    ];
+    
+   const likertIrritating = [
+      "1 <p> Nicht irritierend",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Irritierend"
+    ];
+    
+   const likertInteresting = [
+      "1 <p> Nicht interessant",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9 <p> Interessant"
+    ];
+
+////////////////////////////////////////////////////////////
+/* Define Welcome Screen */
+////////////////////////////////////////////////////////////
+
+var welcome = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      <p>Willkommen bei meinem Experiment. Danke, dass Sie mitmachen. Bevor wir beginnen, nehmen Sie sich bitte etwas Zeit, um ein paar Fragen zu Ihrer Person zu beantworten.</p>
+      <button id="forward-button">Next</button>
+      <button id="back-button" style="display: none;">Back</button>
+    </div>
+  `,
+  on_load: function(data) {
+    document.querySelector('#forward-button').addEventListener('click', function() {
+      jsPsych.finishTrial();
+    });
+    document.querySelector('#back-button').addEventListener('click', function() {
+      // logic for going back in the timeline
+    });
+  },
+  choices: "NO_KEYS"
+};
+
+timeline.push(welcome)
+
+
+////////////////////////////////////////////////////////////
+/* Demographics */
+////////////////////////////////////////////////////////////
+
+var age = {
+      type: jsPsychSurveyText,
+      questions: [{prompt: "Wie alt bist du?", name: "age"}],
+      on_finish: function (data) {
+        jsPsych.data.addProperties({age: parseInt(data.responses)});
+      },
+    };
+
+timeline.push(age)
+
+var infos = {
+      type: jsPsychSurveyMultiSelect,
+      questions: [
+        {
+          prompt: "Was ist dein Geschlecht?", 
+          options: ['Mann', 'Frau', 'Ich möchte lieber nicht sagen'], 
+          horizontal: true,
+          required: true,
+          name: 'Gender'
+        }, 
+         {
+          prompt: "Was ist dein höchster abgeschlossener Bildungsabschluss?", 
+          options: ['Keine abgeschlossene Schulbildung', 'Grundschulbildung (Alter: 5-10)',
+                ' Sekundarstufe (Alter: 11-17 Jahre)', 'Hochschulabschluss/berufliches Äquivalent', 
+                ' Postgraduierter Abschluss', 'Ich möchte lieber nicht sagen'],      
+          horizontal: true,
+          required: true,
+          name: 'Education'
+        }
+      ], 
+      randomize_question_order: false
+    };
+    
+timeline.push(infos);
+
+////////////////////////////////////////////////////////////
+/* Experiment*/
+////////////////////////////////////////////////////////////
+
+var instructions = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      Im Folgenden wirst du ein Bild sehen. Nachdem es verschwindet, musst du ein paar Fragen beantworten.<p> Nimm dir so viel Zeit wie du brauchst, um auf diese Fragen zu antworten.
+      <button id="forward-button">Next</button>
+      <button id="back-button" style="display: none;">Back</button>
+    </div>
+  `,
+  on_load: function(data) {
+    document.querySelector('#forward-button').addEventListener('click', function() {
+      jsPsych.finishTrial();
+    });
+    document.querySelector('#back-button').addEventListener('click', function() {
+      // logic for going back in the timeline
+    });
+  },
+  choices: "NO_KEYS"
+};
+
+timeline.push(instructions)
+
+
+
+////////////////////////////////////////////////////////////
+    /* Stimuli */
+    ////////////////////////////////////////////////////////////
+    
+    // Create the Image pools 
+
+var image_pool_DE = ['Control_Headphones.png', 'Control_Toothbrush.png', 'Control_Watch.png',  
+'DE_Longterm_Headphones.png', 'DE_LongTerm_Toothbrush.png', 'DE_Longterm_Watch.png',
+'DE_Shortterm_Headphones.png', 'DE_Shortterm_Toothbrush.png', 'DE_Shortterm_watch.png'
+]
+
+  // Preload the images -> Prevent technical hiccups
+    jsPsych.pluginAPI.preloadImages(image_pool_DE, function(){
+    });
+    
+      // Preload the images -> Prevent technical hiccups
+    jsPsych.pluginAPI.preloadImages(image_pool_DE, function(){
+    });
+
+    
+
+  ////////////////////////////////////////////////////////////
+    /* Timline of Experiment */
+  ////////////////////////////////////////////////////////////
+  
+    // 1. Fixation Cross
+    var fixation_timing = null; 
+    var fixation = {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: '<div style="font-size:60px;">+</div>',
+      choices: "NO_KEYS",
+      trial_duration: function() {
+        fixation_timing = jsPsych.randomization.sampleWithReplacement([1000], 1);
+        return fixation_timing;
+      },
+      data: {
+        task: 'fixation'
+      },
+      on_finish: function(data){
+        data.trial_duration = fixation_timing;
+      } 
+    };
+    
+    // 2. For-Loop over randomized stimuli 
+    
+    var trials = []; 
+    for (var i = 0; i < image_pool_DE.length; i++) {
+      trials.push({
+      stimulus: image_pool_DE[i]
+      })
+    }
+
+  // 3. Display stimulus (8000ms)
+    var stimuli = {
+      type: jsPsychImageKeyboardResponse, 
+      stimulus: jsPsych.timelineVariable('stimulus'),
+      stimulus_height: 350,
+      choices: 'NO_KEYS', 
+      trial_duration: 8000, 
+    };
+    
+    
+    const follow_up = {
+      type: jsPsychSurveyLikert,
+      preamble:
+        "Bitte bewerte die Werbung auf den folgenden Skalen:",
+      questions: [
+        {
+          prompt: "",
+          labels: likertPleasant,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertLikeable,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertIrritating,
+          required: true
+        },
+        {
+          prompt: "",
+          labels: likertInteresting,
+          required: true
+        }
+      ]
+    };
+
+    
+    
+    
+    ////////////////////////////////////////////////////////////
+    /* Define the test procedure */
+    ////////////////////////////////////////////////////////////
+     var test_procedure = {
+      timeline: [fixation, stimuli, follow_up], 
+      timeline_variables: trials, 
+      sample: {
+        type: 'without-replacement',
+        size: image_pool_DE.length}, 
+        repetitions: 1 
+      }; 
+      timeline.push(test_procedure)
+      
+      
+      
+      
+ 
+       
+      var debrief = {
+  type: jsPsychHtmlKeyboardResponse,
+  stimulus: `
+    <div>
+      Dies ist das Ende des Experiments. Vielen Dank für deine Teilnahme!<p> Unser Ziel war es zu untersuchen, wie die kulturelle Dimension der Langzeitorientierung nach Hofstede die Reaktionen der Verbraucher auf Werbung beeinflusst. Sie haben verschiedene Anzeigen gesehen, die entweder langfristige oder kurzfristige Werte widerspiegeln. Der Zweck war zu verstehen, wie diese unterschiedlichen Appelle die Einstellungen und Entscheidungen der Verbraucher beeinflussen. Ihre Teilnahme hilft uns, unser Verständnis für das komplexe Zusammenspiel zwischen Kultur und Verbraucherverhalten zu vertiefen.<p> Wenn du Fragen hast, kontaktiere bitte: 100489594@alumnos.uc3m.es <p> <strong>     <p><a href="https://app.prolific.co/submissions/complete?cc=CHLLL8F4">Click here to return to Prolific and complete the study</a>.</p>
+    </div>
+  `,
+  choices: "NO_KEYS"
+};
+
+timeline.push(debrief)
+
+
+      
+
+
+   
+    /* start the experiment */
+    jsPsych.run(timeline);
